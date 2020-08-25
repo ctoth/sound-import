@@ -38,7 +38,7 @@ class Sound(object):
   return self._intermediate_filename
 
  def convert_to_intermediate(self):
-  ffmpeg.input(self.in_file).audio.output(self.intermediate_filename, format="wav").overwrite_output().run()
+  ffmpeg.input(self.in_file).audio.output(self.intermediate_filename, format="wav", acodec='copy').overwrite_output().run()
  
  def process_intermediate(self):
   run_import_chain(self.intermediate_filename, self.output_wav)
