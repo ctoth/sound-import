@@ -34,22 +34,23 @@ class Sound(object):
  @property
  def intermediate_filename(self):
   if not self._intermediate_filename:
-   self.intermediate_fd, self._intermediate_filename = tempfile.mkstemp()
+   self.intermediate_fd, self._intermediate_filename = tempfile.mkstemp(".wav")
   return self._intermediate_filename
 
  def convert_to_intermediate(self):
-  ffmpeg.input(self.in_file).audio.output(self.intermediate_filename, format="wav", acodec='copy').overwrite_output().run()
+  ffmpeg.input(self.in_file).audio.output(self.intermediate_filename, format="wav", acodec='pcm_s24le').overwrite_output().run()
  
  def process_intermediate(self):
   run_import_chain(self.intermediate_filename, self.output_wav)
-  
+
  def render_output(self):
-  ffmpeg.input(self.intermediate_filename, format="wav").audio.output(self.out_file, vbr=5, format="adts", ).overwrite_output().run()
+  ffmpeg.input(self.output_wav, format="wav").audio.output(self.out_file, audio_bitrate=128000).overwrite_output().run()
   os.close(self.intermediate_fd)
   os.remove(self.intermediate_filename)
   os.remove(self.output_wav)
 
 def convert_sound_file(in_file, out_dir):
+ out_dir = os.path.dirname(output_filename(in_file, out_dir))
  if not os.path.exists(out_dir):
   os.makedirs(out_dir)
  print(in_file)
@@ -62,13 +63,21 @@ def convert_sound_file(in_file, out_dir):
 
 def run_import_chain(in_file, out_file):
  trf = sox.Transformer()
- trf.silence(location=1, buffer_around_silence=True)
- trf.reverse()
- trf.silence(location=1, buffer_around_silence=True)
- trf.reverse()
- trf.norm()
  trf.set_input_format(file_type="wav")
+ trf = trf.silence(location=1, buffer_around_silence=True)
+ trf = trf.reverse()
+ trf = trf.silence(location=1, buffer_around_silence=True)
+ trf = trf.reverse()
+ trf = trf.norm()
  trf.build(in_file, out_file)
+
+def output_filename(infile, outdir):
+ infile = os.path.realpath(infile)
+ outdir = os.path.realpath(outdir)
+ common = os.path.commonprefix([infile, outdir])
+ path = infile[len(common):]
+ return os.path.join(outdir, path)
+
 
 def main():
  out_dir = sys.argv[1]
