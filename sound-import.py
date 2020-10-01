@@ -44,7 +44,7 @@ class Sound(object):
   run_import_chain(self.intermediate_filename, self.output_wav)
 
  def render_output(self):
-  ffmpeg.input(self.output_wav, format="wav").audio.output(self.out_file, audio_bitrate=128000).overwrite_output().run()
+  ffmpeg.input(self.output_wav, format="wav").audio.output(self.out_file, audio_bitrate=192000).overwrite_output().run()
   os.close(self.intermediate_fd)
   os.remove(self.intermediate_filename)
   os.remove(self.output_wav)
@@ -68,7 +68,7 @@ def run_import_chain(in_file, out_file):
  trf = trf.reverse()
  trf = trf.silence(location=1, buffer_around_silence=True)
  trf = trf.reverse()
- trf = trf.norm()
+ #trf = trf.norm()
  trf.build(in_file, out_file)
 
 def output_filename(infile, outdir):
